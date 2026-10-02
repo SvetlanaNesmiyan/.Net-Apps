@@ -12,3 +12,4 @@
 /Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.pdb
 /Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.genruntimeconfig.cache
 /Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/ref/IoTTelemetryLab.dll
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.sourcelink.json
