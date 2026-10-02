@@ -1,0 +1,14 @@
+/Applications/Net Apps/IoTTelemetryLab/bin/Debug/net8.0/IoTTelemetryLab
+/Applications/Net Apps/IoTTelemetryLab/bin/Debug/net8.0/IoTTelemetryLab.deps.json
+/Applications/Net Apps/IoTTelemetryLab/bin/Debug/net8.0/IoTTelemetryLab.runtimeconfig.json
+/Applications/Net Apps/IoTTelemetryLab/bin/Debug/net8.0/IoTTelemetryLab.dll
+/Applications/Net Apps/IoTTelemetryLab/bin/Debug/net8.0/IoTTelemetryLab.pdb
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.GeneratedMSBuildEditorConfig.editorconfig
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.AssemblyInfoInputs.cache
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.AssemblyInfo.cs
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.csproj.CoreCompileInputs.cache
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.dll
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/refint/IoTTelemetryLab.dll
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.pdb
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/IoTTelemetryLab.genruntimeconfig.cache
+/Applications/Net Apps/IoTTelemetryLab/obj/Debug/net8.0/ref/IoTTelemetryLab.dll
