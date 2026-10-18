@@ -1,68 +1,76 @@
 ﻿using IoTTelemetryLab.Data;
 using IoTTelemetryLab.Evaluation;
-using IoTTelemetryLab.Models;
 using IoTTelemetryLab.Monitoring;
 using IoTTelemetryLab.Monitoring.Subscribers;
+using IoTTelemetryLab.Models;
 using IoTTelemetryLab.Processing;
 
-const string deviceId = "fuel-sensor-07";
-const SensorType sensorType = SensorType.FuelFlow; // ВАР: 7
-
-// 1. Створюємо реєстр і реєструємо стратегію (Завдання А)
 var registry = EvaluatorSetup.CreateDefaultRegistry();
 
-// 2. Демонстрація Завдання Б: реєструємо ДРУГУ стратегію для того самого типу за допомогою Func-лямбди.
-// Обидва оцінювачі (клас FuelFlowEvaluator та лямбда) дають однаковий результат.
-// Для основного циклу можна використовувати будь-яку з них. Залишимо зареєстровану за замовчуванням.
-// registry.Register(SensorType.FuelFlow, value => value switch {
-//     > 15.0 => SafetyStatus.Critical,
-//     > 10.0 => SafetyStatus.Warning,
-//     _ => SafetyStatus.Normal
-// });
+var temperatureMonitor = new TelemetryMonitor(registry, SensorType.Temperature);
+var vibrationMonitor = new TelemetryMonitor(registry, SensorType.Vibration);
+var voltageMonitor = new TelemetryMonitor(registry, SensorType.Voltage);
+var fuelFlowMonitor = new TelemetryMonitor(registry, SensorType.FuelFlow);
 
-// 3. Створюємо монітор
-var monitor = new TelemetryMonitor(registry, sensorType);
-
-// 4. Створюємо підписників
 var criticalCounter = new CriticalCounterSubscriber();
-var fuelCollector = new CriticalFuelFlowCollector(); // Наш індивідуальний підписник
+var fuelFlowCollector = new CriticalFuelFlowCollector();
 
-// 5. Підписуємося на подію (multicast)
-monitor.OnStatusEvaluated += ConsoleAlertSubscriber.OnStatusEvaluated;
-monitor.OnStatusEvaluated += criticalCounter.OnStatusEvaluated;
-monitor.OnStatusEvaluated += fuelCollector.OnStatusEvaluated; // Подключаем вариант 7
+temperatureMonitor.OnStatusEvaluated += ConsoleAlertSubscriber.OnStatusEvaluated;
+temperatureMonitor.OnStatusEvaluated += criticalCounter.OnStatusEvaluated;
+vibrationMonitor.OnStatusEvaluated += ConsoleAlertSubscriber.OnStatusEvaluated;
+vibrationMonitor.OnStatusEvaluated += criticalCounter.OnStatusEvaluated;
+voltageMonitor.OnStatusEvaluated += ConsoleAlertSubscriber.OnStatusEvaluated;
+voltageMonitor.OnStatusEvaluated += criticalCounter.OnStatusEvaluated;
+fuelFlowMonitor.OnStatusEvaluated += ConsoleAlertSubscriber.OnStatusEvaluated;
+fuelFlowMonitor.OnStatusEvaluated += criticalCounter.OnStatusEvaluated;
+fuelFlowMonitor.OnStatusEvaluated += fuelFlowCollector.OnStatusEvaluated;
 
-// 6. Генеруємо дані
-// Для датчика витрати палива (Critical > 15, Warning > 10) задаємо діапазон 5–20 л/год,
-// щоб у вибірку потрапляли всі три стани.
-var rawData = TelemetryGenerator.GenerateRawBatch(deviceId, count: 50, minValue: 5, maxValue: 20);
-var cleaned = TelemetryCleaner.RemoveInvalid(rawData).ToList();
+var allReadings = new List<(TelemetryReading Reading, SensorType Type)>();
+allReadings.AddRange(TelemetryGenerator.GenerateRawBatch("TEMP-001", 250, -20, 120).Select(r => (r, SensorType.Temperature)));
+allReadings.AddRange(TelemetryGenerator.GenerateRawBatch("VIB-001", 250, 0, 10).Select(r => (r, SensorType.Vibration)));
+allReadings.AddRange(TelemetryGenerator.GenerateRawBatch("VOLT-001", 250, 0, 5).Select(r => (r, SensorType.Voltage)));
+allReadings.AddRange(TelemetryGenerator.GenerateRawBatch("FUEL-001", 250, 0, 100).Select(r => (r, SensorType.FuelFlow)));
 
-// 7. Обробляємо дані (подія спрацьовує для кожного показання)
-foreach (var reading in cleaned)
+foreach (var (reading, type) in allReadings)
 {
-    monitor.Process(reading);
+    switch (type)
+    {
+        case SensorType.Temperature:
+            temperatureMonitor.Process(reading);
+            break;
+        case SensorType.Vibration:
+            vibrationMonitor.Process(reading);
+            break;
+        case SensorType.Voltage:
+            voltageMonitor.Process(reading);
+            break;
+        case SensorType.FuelFlow:
+            fuelFlowMonitor.Process(reading);
+            break;
+    }
 }
 
-// 8. Виводимо підсумкову аналітику
-Console.WriteLine($"\nВсего критических состояний (счетчик): {criticalCounter.CriticalCount}");
+var cleanReadings = allReadings
+    .Select(x => x.Reading)
+    .ToList();
+cleanReadings = TelemetryCleaner.RemoveInvalid(cleanReadings).ToList();
 
-// Демонстрація роботи індивідуального передплатника (Варіант 7)
-Console.WriteLine($"\n--- Анализ критических показаний расхода топлива (Вариант 7) ---");
-Console.WriteLine($"Собрано критических показаний: {fuelCollector.CriticalReadings.Count}");
-if (fuelCollector.CriticalReadings.Any())
+var cleanWithType = allReadings
+    .Where(x => !double.IsNaN(x.Reading.Value) && x.Reading.Value != -999.0)
+    .ToList();
+
+Console.WriteLine("\n--- Analytics ---");
+Console.WriteLine($"Critical Temperature: {TelemetryAnalytics.CountByStatus(cleanWithType.Where(x => x.Type == SensorType.Temperature).Select(x => x.Reading), SensorType.Temperature, SafetyStatus.Critical, registry)}");
+Console.WriteLine($"Critical Vibration: {TelemetryAnalytics.CountByStatus(cleanWithType.Where(x => x.Type == SensorType.Vibration).Select(x => x.Reading), SensorType.Vibration, SafetyStatus.Critical, registry)}");
+Console.WriteLine($"Critical Voltage: {TelemetryAnalytics.CountByStatus(cleanWithType.Where(x => x.Type == SensorType.Voltage).Select(x => x.Reading), SensorType.Voltage, SafetyStatus.Critical, registry)}");
+Console.WriteLine($"Critical FuelFlow: {TelemetryAnalytics.CountByStatus(cleanWithType.Where(x => x.Type == SensorType.FuelFlow).Select(x => x.Reading), SensorType.FuelFlow, SafetyStatus.Critical, registry)}");
+
+Console.WriteLine($"\nTotal Critical Count: {criticalCounter.CriticalCount}");
+Console.WriteLine($"FuelFlow Critical Readings Collected: {fuelFlowCollector.CriticalReadings.Count}");
+
+Console.WriteLine("\nMoving Average (Temperature, window=5):");
+var tempReadings = cleanWithType.Where(x => x.Type == SensorType.Temperature).Select(x => x.Reading);
+foreach (var avg in TelemetryAnalytics.MovingAverage(tempReadings, 5).Take(10))
 {
-    var values = fuelCollector.CriticalReadings.Select(r => r.Value).ToList();
-    Console.WriteLine($"Мин. значение: {values.Min():F2} л/ч");
-    Console.WriteLine($"Макс. значение: {values.Max():F2} л/ч");
-    Console.WriteLine($"Среднее значение: {values.Average():F2} л/ч");
-    Console.WriteLine($"Последнее критическое показание: {fuelCollector.CriticalReadings.Last().Value:F2} л/ч " +
-                      $"({fuelCollector.CriticalReadings.Last().Timestamp:HH:mm:ss})");
+    Console.WriteLine($"{avg:F2}");
 }
-
-// Демонстрація того, що клас-оцінювач і Func-оцінювач є взаємозамінними (Завдання Б, п. 2)
-Console.WriteLine("\n--- Проверка взаимозаменяемости оценщиков (Задание Б) ---");
-double testValue = 16.0;
-var classResult = new FuelFlowEvaluator().Evaluate(testValue);
-var funcResult = registry.Evaluate(SensorType.FuelFlow, testValue); // використовує зареєстрований Func
-Console.WriteLine($"Значение {testValue} -> Результат класса: {classResult}, Результат Func: {funcResult}. Совпадают: {classResult == funcResult}");

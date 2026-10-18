@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IoTTelemetryLab")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3bf2dd2298c5cdaac6d2f05d6ee2f650c749b97b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d5924e05de0023ce41a00f42fb290ba6b5ddf3c0")]
 [assembly: System.Reflection.AssemblyProductAttribute("IoTTelemetryLab")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IoTTelemetryLab")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
